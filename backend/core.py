@@ -23,21 +23,32 @@ def run_llm(query: str, chat_history: List[Dict[str, Any]] = []):
     chat = ChatOpenAI(verbose=True, temperature=0, model ="gpt-4o-mini")
     #chat = Ollama(model="llama3")
 
-    retrieval_qa_chat_prompt: PromptTemplate = hub.pull(
-        "langchain-ai/retrieval-qa-chat",
-    )
+    retrieval_qa_chat_prompt = hub.pull("langchain-ai/retrieval-qa-chat")
 
+    #this is how it looks before memory
     template = """
     Answer any use questions based solely on the context below:
 
     <context>
     {context}
     </context>
+    
+    <conversation_history>
+    {chat_history}
+    </conversation_history>
 
-    if the answer is not provided in the context say "Answer not in context"
-    Question:
-    {input}
+    Guidelines:
+    - Use the conversation history to understand follow-up questions
+    - If the user refers to previous messages, acknowledge it
+    - If the answer is not in the context, say "I don't have that information in my knowledge base"
+    - Be conversational and helpful
+    
+    Question: {input}
+    
+    Answer:
     """
+
+    #the new one using a self defined template which looks similar to the original one + memory
     retrieval_qa_chat_prompt2 = PromptTemplate.from_template(template=template)
 
     stuff_documents_chain = create_stuff_documents_chain(
